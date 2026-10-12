@@ -1,0 +1,7 @@
+/target
+/config.toml
+*.db
+*.db-shm
+*.db-wal
+data/*.db*
+!data/taxonomy.json

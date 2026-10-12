@@ -1,0 +1,44 @@
+# ==============================================================================
+# Crossborder E-commerce MCP 服务配置文件模板
+# ==============================================================================
+
+# 1. 基础服务配置 [server]
+[server]
+name = "crossborder-ecom-mcp"
+log_level = "info"               # 日志级别: trace, debug, info, warn, error
+
+# 2. 本地数据库与存储配置 [storage]
+[storage]
+db_path = "data/ecom.db"         # 嵌入式 SQLite 数据库路径 (自动创建目录与文件)
+
+# 3. 缓存策略与降频保护 [cache]
+[cache]
+enabled = true                   # 是否启用本地缓存 (强烈建议开启以防止被电商平台封禁)
+default_ttl_hours = 12           # 商品基础信息与详情缓存时间 (小时)
+review_ttl_hours = 48            # 买家评论内容缓存时间 (小时)
+
+# 4. 网络代理与反爬防护 [network]
+[network]
+timeout_seconds = 15             # 单次 HTTP 请求超时 (秒)
+retry_count = 2                  # 失败重试次数
+# 跨境海外平台（如 Amazon、Shopify）建议配置 HTTP/SOCKS5 代理；留空则直连
+# proxy = "http://127.0.0.1:7890"
+# 自定义 User-Agent；留空则由系统自动提供主流 Chrome 桌面端指纹
+# user_agent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 ..."
+
+# 5. 各大出海电商平台专属配置 [platforms]
+[platforms.amazon]
+default_zip_code = "10001"       # 核心：设置美国纽约邮编，确保展示美区真实库存与售价，避免直邮中国的高昂运费与非美区标价
+preferred_currency = "USD"       # 首选币种
+# cookie = ""                    # 可选：如果遇到严苛人机验证，可填入浏览器登录态 Cookie
+
+[platforms.shopify]
+fetch_reviews = true             # 是否自动探测主流独立站评论插件 (Judge.me, Loox 等)
+
+[platforms.tiktok]
+# 可选：如果遇到 Security Check 人机验证拦截，请在浏览器登录后提取 Cookie 填入此处即可穿透风控
+# cookie = "tt_chain_token=...; msToken=...; odin_tt=..."
+
+[platforms.aliexpress]
+# 可选：如果遇到阿里系滑块验证或天网风控 (rgv587_flag / _____tmd_____)，可在浏览器访问速卖通后复制 Cookie 填入此处
+# cookie = "aep_usuc_f=...; xman_us_f=...; cna=..."
