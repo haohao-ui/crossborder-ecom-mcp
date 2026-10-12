@@ -98,7 +98,7 @@ crossborder-ecom-mcp --proxy "http://127.0.0.1:7890" --db "data/custom.db" serve
 
 ## 内置标准分类与地区元数据体系
 
-服务内置了完整的出海电商标准化元数据资产（[`data/taxonomy.json`](file:///Users/yang/tools/code/Rust/crossborder-ecom-mcp/data/taxonomy.json)）：
+服务内置了完整的出海电商标准化元数据资产（[`data/taxonomy.json`](data/taxonomy.json)）：
 1. **30 个标准一级分类大类与完整二级子类树**：
    - 涵盖 美妆个护、女装与女士内衣、手机与数码、电脑办公、居家日用、食品饮料、运动与户外、珠宝、宠物等 30 个一级大类及数百个细分二级类目代码 (`c_code`)。
 2. **20 个全球核心出海国家与地区**：
@@ -137,10 +137,11 @@ crossborder-ecom-mcp/
 ---
 
 ## 编译与构建
-
+ 
 ```bash
-# 进入项目目录
-cd /Users/yang/tools/code/Rust/crossborder-ecom-mcp
+# 克隆仓库并进入目录
+git clone https://github.com/haohao-ui/crossborder-ecom-mcp.git
+cd crossborder-ecom-mcp
 
 # 编译测试
 cargo test
@@ -159,9 +160,11 @@ cargo build --release
 {
   "mcpServers": {
     "crossborder-ecom": {
-      "command": "/Users/yang/tools/code/Rust/crossborder-ecom-mcp/target/release/crossborder-ecom-mcp",
+      "command": "crossborder-ecom-mcp",
       "args": []
     }
   }
 }
 ```
+
+> **提示**：若二进制文件所在目录（如 `~/.local/bin`）未加入系统的全局环境变量 `PATH`，也可填入绝对路径，例如 `~/.local/bin/crossborder-ecom-mcp` 或 `/usr/local/bin/crossborder-ecom-mcp`。
