@@ -36,30 +36,50 @@
 
 ---
 
+## 一键安装与快速启动
+
+### 方式一：Shell 一键安装（推荐，自动匹配操作系统与架构）
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/haohao-ui/crossborder-ecom-mcp/main/install.sh | bash
+```
+
+> **说明**：该脚本会自动识别您的系统（macOS / Linux / Windows）与 CPU 架构（x86_64 / arm64），自动下载最新预编译二进制并安装至 `~/.local/bin`。若未检测到 Release 包且本地有 Rust 环境，将自动回退到源码编译。
+
+### 方式二：通过 Rust Cargo 一键安装
+
+```bash
+cargo install --git https://github.com/haohao-ui/crossborder-ecom-mcp.git
+```
+
+### 方式三：直接下载 GitHub Releases 预编译包
+
+访问 [GitHub Releases 页面](https://github.com/haohao-ui/crossborder-ecom-mcp/releases) 下载对应平台的二进制压缩包（`.tar.gz` 或 `.zip`），解压后将可执行文件移动至您的系统 PATH 路径即可。
+
+---
+
 ## CLI 命令行模式使用指南
 
 除了作为 MCP 协议服务端运行，程序同时提供了一流的 CLI 命令行交互体验，可直接在终端快速检索商品、调价历史与标准分类：
 
 ```bash
-cd /Users/yang/tools/code/Rust/crossborder-ecom-mcp
-
 # 1. 抓取并展示商品详情
-./target/release/crossborder-ecom-mcp product "https://allbirds.com/products/womens-allbirds-flip-flop-dusty-pink"
+crossborder-ecom-mcp product "https://allbirds.com/products/womens-allbirds-flip-flop-dusty-pink"
 
 # 2. 强制跳过缓存刷新抓取并输出完整 JSON
-./target/release/crossborder-ecom-mcp product "<URL>" --force --json
+crossborder-ecom-mcp product "<URL>" --force --json
 
 # 3. 搜索标准分类大类与二级子类
-./target/release/crossborder-ecom-mcp category "电脑"
+crossborder-ecom-mcp category "电脑"
 
 # 4. 查看商品价格变动历史快照
-./target/release/crossborder-ecom-mcp history "<URL>"
+crossborder-ecom-mcp history "<URL>"
 
 # 5. 查看支持的 20 个出海国家/地区
-./target/release/crossborder-ecom-mcp countries
+crossborder-ecom-mcp countries
 
 # 6. 带参数覆盖运行服务 (如指定自定义代理与数据库)
-./target/release/crossborder-ecom-mcp --proxy "http://127.0.0.1:7890" --db "data/custom.db" serve
+crossborder-ecom-mcp --proxy "http://127.0.0.1:7890" --db "data/custom.db" serve
 ```
 
 ---
