@@ -13,6 +13,12 @@ use crate::platforms::PlatformDriver;
 
 pub struct AmazonDriver;
 
+impl Default for AmazonDriver {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl AmazonDriver {
     pub fn new() -> Self {
         Self
@@ -21,7 +27,9 @@ impl AmazonDriver {
     /// 从 HTML 文本中提取上架时间 "Date First Available"
     fn extract_launch_date(&self, html_text: &str, document: &Html) -> Option<String> {
         // 1. 尝试从详情列表区域提取 (detailBullets)
-        if let Ok(sel) = Selector::parse("#detailBullets_feature_div li, #detailBulletsWrapper_feature_div li") {
+        if let Ok(sel) =
+            Selector::parse("#detailBullets_feature_div li, #detailBulletsWrapper_feature_div li")
+        {
             for li in document.select(&sel) {
                 let text = li.text().collect::<Vec<_>>().join(" ");
                 if text.contains("Date First Available") {
@@ -53,7 +61,10 @@ impl AmazonDriver {
         }
 
         // 3. 正则强行匹配
-        let re = Regex::new(r"(?i)Date First Available\s*[:\t\n<>/a-z=_-]+\s*([A-Za-z]+ \d{1,2}, \d{4})").ok()?;
+        let re = Regex::new(
+            r"(?i)Date First Available\s*[:\t\n<>/a-z=_-]+\s*([A-Za-z]+ \d{1,2}, \d{4})",
+        )
+        .ok()?;
         if let Some(caps) = re.captures(html_text) {
             return Some(caps.get(1)?.as_str().to_string());
         }
@@ -73,7 +84,8 @@ impl AmazonDriver {
             if let Ok(sel) = Selector::parse(s) {
                 for el in document.select(&sel) {
                     let text = el.text().collect::<String>().trim().to_string();
-                    if text.contains("bought in past month") || text.contains("bought in past week") {
+                    if text.contains("bought in past month") || text.contains("bought in past week")
+                    {
                         return Some(text);
                     }
                 }
@@ -101,7 +113,10 @@ impl AmazonDriver {
         }
 
         // 2. 从内嵌 JavaScript 的 colorImages 提取高清图
-        let re = Regex::new(r#""hiRes"\s*:\s*"(https://images-na\.ssl-images-amazon\.com/images/I/[^"]+)""#).ok();
+        let re = Regex::new(
+            r#""hiRes"\s*:\s*"(https://images-na\.ssl-images-amazon\.com/images/I/[^"]+)""#,
+        )
+        .ok();
         if let Some(re) = re {
             for caps in re.captures_iter(html_text) {
                 if let Some(m) = caps.get(1) {
@@ -155,13 +170,18 @@ impl PlatformDriver for AmazonDriver {
         http: &HttpClient,
         options: &FetchOptions,
     ) -> Result<ProductDetail> {
-        let asin = self.extract_item_id(url).context("无法从链接中识别 Amazon ASIN 码")?;
+        let asin = self
+            .extract_item_id(url)
+            .context("无法从链接中识别 Amazon ASIN 码")?;
         let parsed_url = Url::parse(url).context("无效的 URL")?;
         let host = parsed_url.host_str().unwrap_or("www.amazon.com");
 
         // 构建规范的商品访问 URL
         let canonical_url = format!("https://{}/dp/{}", host, asin);
-        info!("正在请求亚马逊商品页: ASIN = {}, URL = {}", asin, canonical_url);
+        info!(
+            "正在请求亚马逊商品页: ASIN = {}, URL = {}",
+            asin, canonical_url
+        );
 
         // 注入美区邮编 Cookie (sp-cdn, ubid-main 等)，确保以美区视角展示价格与库存
         let zip = options.zip_code.as_deref().unwrap_or("10001");
@@ -191,7 +211,11 @@ impl PlatformDriver for AmazonDriver {
                 if text.starts_with("Brand: ") {
                     brand = Some(text.replace("Brand: ", "").trim().to_string());
                 } else if text.starts_with("Visit the ") {
-                    let s = text.replace("Visit the ", "").replace(" Store", "").trim().to_string();
+                    let s = text
+                        .replace("Visit the ", "")
+                        .replace(" Store", "")
+                        .trim()
+                        .to_string();
                     shop_name = Some(s.clone());
                     brand = Some(s);
                 } else {
@@ -218,7 +242,9 @@ impl PlatformDriver for AmazonDriver {
         let mut original_price = None;
         let mut currency = "USD".to_string();
 
-        if let Ok(sel) = Selector::parse(".a-price .a-offscreen, #priceblock_ourprice, #priceblock_dealprice") {
+        if let Ok(sel) =
+            Selector::parse(".a-price .a-offscreen, #priceblock_ourprice, #priceblock_dealprice")
+        {
             if let Some(el) = document.select(&sel).next() {
                 let price_text = el.text().collect::<String>().trim().to_string();
                 if price_text.starts_with('$') {
@@ -255,7 +281,9 @@ impl PlatformDriver for AmazonDriver {
         // 6. 评分与评价总数
         let mut rating_score = None;
         let mut review_count = None;
-        if let Ok(sel) = Selector::parse("#acrPopover .a-icon-alt, span[data-hook='rating-out-of-text']") {
+        if let Ok(sel) =
+            Selector::parse("#acrPopover .a-icon-alt, span[data-hook='rating-out-of-text']")
+        {
             if let Some(el) = document.select(&sel).next() {
                 let text = el.text().collect::<String>();
                 let re = Regex::new(r"([\d.]+)\s*out of").unwrap();
@@ -283,10 +311,18 @@ impl PlatformDriver for AmazonDriver {
 
         // 8. 技术规格与五点卖点描述
         let mut specifications = HashMap::new();
-        if let Ok(sel) = Selector::parse("#productDetails_techSpec_section_1 tr, #technicalSpecifications_section_1 tr") {
+        if let Ok(sel) = Selector::parse(
+            "#productDetails_techSpec_section_1 tr, #technicalSpecifications_section_1 tr",
+        ) {
             for tr in document.select(&sel) {
-                let th = tr.select(&Selector::parse("th").unwrap()).next().map(|el| el.text().collect::<String>().trim().to_string());
-                let td = tr.select(&Selector::parse("td").unwrap()).next().map(|el| el.text().collect::<String>().trim().to_string());
+                let th = tr
+                    .select(&Selector::parse("th").unwrap())
+                    .next()
+                    .map(|el| el.text().collect::<String>().trim().to_string());
+                let td = tr
+                    .select(&Selector::parse("td").unwrap())
+                    .next()
+                    .map(|el| el.text().collect::<String>().trim().to_string());
                 if let (Some(k), Some(v)) = (th, td) {
                     if !k.is_empty() && !v.is_empty() {
                         specifications.insert(k, v);
@@ -381,6 +417,8 @@ impl PlatformDriver for AmazonDriver {
 
         let mut list = Vec::new();
         let review_block_sel = Selector::parse("div[data-hook='review']").unwrap();
+        let rating_re = Regex::new(r"(\d)").ok();
+        let helpful_re = Regex::new(r"(\d+)").ok();
 
         for el in document.select(&review_block_sel).take(limit) {
             let review_id = el.value().attr("id").unwrap_or("unknown").to_string();
@@ -398,7 +436,7 @@ impl PlatformDriver for AmazonDriver {
                 .next()
                 .and_then(|r| {
                     let text = r.text().collect::<String>();
-                    let re = Regex::new(r"(\d)").ok()?;
+                    let re = rating_re.as_ref()?;
                     re.find(&text)?.as_str().parse::<u8>().ok()
                 })
                 .unwrap_or(5);
@@ -439,7 +477,7 @@ impl PlatformDriver for AmazonDriver {
                 .next()
                 .and_then(|h| {
                     let text = h.text().collect::<String>();
-                    let re = Regex::new(r"(\d+)").ok()?;
+                    let re = helpful_re.as_ref()?;
                     re.find(&text)?.as_str().parse::<u32>().ok()
                 });
 

@@ -15,6 +15,12 @@ use crate::taxonomy;
 
 pub struct AliExpressDriver;
 
+impl Default for AliExpressDriver {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl AliExpressDriver {
     pub fn new() -> Self {
         Self
@@ -86,10 +92,17 @@ impl AliExpressDriver {
     fn detect_region(&self, url_str: &str) -> Option<taxonomy::CountryItem> {
         if let Ok(parsed) = Url::parse(url_str) {
             for (k, v) in parsed.query_pairs() {
-                if k.eq_ignore_ascii_case("country") || k.eq_ignore_ascii_case("locale") || k.eq_ignore_ascii_case("shipTo") {
+                if k.eq_ignore_ascii_case("country")
+                    || k.eq_ignore_ascii_case("locale")
+                    || k.eq_ignore_ascii_case("shipTo")
+                {
                     let code = v.to_uppercase();
                     let prefix = if code.len() >= 2 { &code[..2] } else { &code };
-                    if let Some(c) = taxonomy::TAXONOMY.country.iter().find(|c| c.region_code == prefix) {
+                    if let Some(c) = taxonomy::TAXONOMY
+                        .country
+                        .iter()
+                        .find(|c| c.region_code == prefix)
+                    {
                         return Some(c.clone());
                     }
                 }
@@ -108,7 +121,9 @@ impl PlatformDriver for AliExpressDriver {
 
     fn can_handle(&self, url: &str) -> bool {
         let lower = url.to_lowercase();
-        (lower.contains("aliexpress.com") || lower.contains("aliexpress.us") || lower.contains("aliexpress.ru"))
+        (lower.contains("aliexpress.com")
+            || lower.contains("aliexpress.us")
+            || lower.contains("aliexpress.ru"))
             && (lower.contains("item") || lower.contains("/i/") || lower.contains("product"))
     }
 
@@ -143,7 +158,9 @@ impl PlatformDriver for AliExpressDriver {
         http: &HttpClient,
         options: &FetchOptions,
     ) -> Result<ProductDetail> {
-        let item_id = self.extract_item_id(url).context("无法识别 AliExpress 商品 ID")?;
+        let item_id = self
+            .extract_item_id(url)
+            .context("无法识别 AliExpress 商品 ID")?;
         info!("正在拉取 AliExpress 商品: ID = {}, URL = {}", item_id, url);
 
         let cookie_str = options.cookie.as_deref();
@@ -185,7 +202,8 @@ impl PlatformDriver for AliExpressDriver {
         let mut description_markdown = String::new();
 
         // 1. 优先提取 Meta 结构化标头 (AliExpress 全球站最稳定的高保真数据源)
-        if let Ok(sel) = Selector::parse(r#"meta[property="og:title"], meta[name="twitter:title"]"#) {
+        if let Ok(sel) = Selector::parse(r#"meta[property="og:title"], meta[name="twitter:title"]"#)
+        {
             for el in document.select(&sel) {
                 if let Some(content) = el.value().attr("content") {
                     let cleaned = clean_aliexpress_title(content);
@@ -197,7 +215,8 @@ impl PlatformDriver for AliExpressDriver {
             }
         }
 
-        if let Ok(sel) = Selector::parse(r#"meta[property="og:image"], meta[name="twitter:image"]"#) {
+        if let Ok(sel) = Selector::parse(r#"meta[property="og:image"], meta[name="twitter:image"]"#)
+        {
             for el in document.select(&sel) {
                 if let Some(img_url) = el.value().attr("content") {
                     let full_img = if img_url.starts_with("//") {
@@ -212,7 +231,9 @@ impl PlatformDriver for AliExpressDriver {
             }
         }
 
-        if let Ok(sel) = Selector::parse(r#"meta[property="og:description"], meta[name="description"]"#) {
+        if let Ok(sel) =
+            Selector::parse(r#"meta[property="og:description"], meta[name="description"]"#)
+        {
             for el in document.select(&sel) {
                 if let Some(content) = el.value().attr("content") {
                     let desc = content.trim();
@@ -232,7 +253,11 @@ impl PlatformDriver for AliExpressDriver {
                     if let Some(imgs) = val.get("imagePathList").and_then(|v| v.as_array()) {
                         for img in imgs {
                             if let Some(src) = img.as_str() {
-                                let full_src = if src.starts_with("//") { format!("https:{}", src) } else { src.to_string() };
+                                let full_src = if src.starts_with("//") {
+                                    format!("https:{}", src)
+                                } else {
+                                    src.to_string()
+                                };
                                 if !main_images.contains(&full_src) {
                                     main_images.push(full_src);
                                 }
@@ -246,14 +271,23 @@ impl PlatformDriver for AliExpressDriver {
         // 3. 如果有结构化/内联数据 (runParams 或 Schema.org Product)，进一步丰富
         if let Some(ref data) = inline_data {
             // 兼容 Schema.org Product
-            if data.get("@type").and_then(|t| t.as_str()).map(|t| t.eq_ignore_ascii_case("Product")).unwrap_or(false) {
+            if data
+                .get("@type")
+                .and_then(|t| t.as_str())
+                .map(|t| t.eq_ignore_ascii_case("Product"))
+                .unwrap_or(false)
+            {
                 if let Some(n) = data.get("name").and_then(|v| v.as_str()) {
                     let cleaned = clean_aliexpress_title(n);
                     if !cleaned.is_empty() && !cleaned.eq_ignore_ascii_case("aliexpress") {
                         title = cleaned;
                     }
                 }
-                if let Some(b) = data.get("brand").and_then(|v| v.get("name")).and_then(|v| v.as_str()) {
+                if let Some(b) = data
+                    .get("brand")
+                    .and_then(|v| v.get("name"))
+                    .and_then(|v| v.as_str())
+                {
                     brand = Some(b.to_string());
                 }
                 if let Some(desc) = data.get("description").and_then(|v| v.as_str()) {
@@ -261,21 +295,33 @@ impl PlatformDriver for AliExpressDriver {
                         description_markdown = html_to_clean_markdown(desc);
                     }
                 }
-                if let Some(date) = data.get("releaseDate").or_else(|| data.get("datePublished")).and_then(|v| v.as_str()) {
+                if let Some(date) = data
+                    .get("releaseDate")
+                    .or_else(|| data.get("datePublished"))
+                    .and_then(|v| v.as_str())
+                {
                     launch_date = Some(date.to_string());
                 }
                 if let Some(img) = data.get("image") {
                     if let Some(arr) = img.as_array() {
                         for i in arr {
                             if let Some(s) = i.as_str() {
-                                let full = if s.starts_with("//") { format!("https:{}", s) } else { s.to_string() };
+                                let full = if s.starts_with("//") {
+                                    format!("https:{}", s)
+                                } else {
+                                    s.to_string()
+                                };
                                 if !main_images.contains(&full) {
                                     main_images.push(full);
                                 }
                             }
                         }
                     } else if let Some(s) = img.as_str() {
-                        let full = if s.starts_with("//") { format!("https:{}", s) } else { s.to_string() };
+                        let full = if s.starts_with("//") {
+                            format!("https:{}", s)
+                        } else {
+                            s.to_string()
+                        };
                         if !main_images.contains(&full) {
                             main_images.push(full);
                         }
@@ -320,7 +366,11 @@ impl PlatformDriver for AliExpressDriver {
 
             // 兼容 AliExpress runParams 模块 (titleModule, priceModule, storeModule, etc.)
             if let Some(title_mod) = self.find_nested_node(data, &["titleModule", "title_module"]) {
-                if let Some(subj) = title_mod.get("subject").or_else(|| title_mod.get("title")).and_then(|v| v.as_str()) {
+                if let Some(subj) = title_mod
+                    .get("subject")
+                    .or_else(|| title_mod.get("title"))
+                    .and_then(|v| v.as_str())
+                {
                     let cleaned = clean_aliexpress_title(subj);
                     if !cleaned.is_empty() && !cleaned.eq_ignore_ascii_case("aliexpress") {
                         title = cleaned;
@@ -328,36 +378,60 @@ impl PlatformDriver for AliExpressDriver {
                 }
             }
 
-            if let Some(store_mod) = self.find_nested_node(data, &["storeModule", "store_module", "seller"]) {
-                if let Some(sn) = store_mod.get("storeName").or_else(|| store_mod.get("name")).and_then(|v| v.as_str()) {
+            if let Some(store_mod) =
+                self.find_nested_node(data, &["storeModule", "store_module", "seller"])
+            {
+                if let Some(sn) = store_mod
+                    .get("storeName")
+                    .or_else(|| store_mod.get("name"))
+                    .and_then(|v| v.as_str())
+                {
                     shop_name = Some(sn.to_string());
                     if brand.is_none() {
                         brand = Some(sn.to_string());
                     }
                 }
-                if let Some(su) = store_mod.get("storeURL").or_else(|| store_mod.get("url")).and_then(|v| v.as_str()) {
+                if let Some(su) = store_mod
+                    .get("storeURL")
+                    .or_else(|| store_mod.get("url"))
+                    .and_then(|v| v.as_str())
+                {
                     shop_url = Some(su.to_string());
                 }
             }
 
             if let Some(price_mod) = self.find_nested_node(data, &["priceModule", "price_module"]) {
-                if let Some(cur) = price_mod.get("currencyCode").or_else(|| price_mod.get("currency")).and_then(|v| v.as_str()) {
+                if let Some(cur) = price_mod
+                    .get("currencyCode")
+                    .or_else(|| price_mod.get("currency"))
+                    .and_then(|v| v.as_str())
+                {
                     currency = cur.to_string();
                 }
-                if let Some(act) = price_mod.get("minActivityAmount").or_else(|| price_mod.get("minAmount")) {
+                if let Some(act) = price_mod
+                    .get("minActivityAmount")
+                    .or_else(|| price_mod.get("minAmount"))
+                {
                     if let Some(v) = act.get("value").and_then(|v| v.as_f64()) {
                         current_price = v;
                     }
                 }
                 if current_price == 0.0 {
-                    if let Some(f_price) = price_mod.get("formatedActivityPrice").or_else(|| price_mod.get("formatedAmount")).and_then(|v| v.as_str()) {
+                    if let Some(f_price) = price_mod
+                        .get("formatedActivityPrice")
+                        .or_else(|| price_mod.get("formatedAmount"))
+                        .and_then(|v| v.as_str())
+                    {
                         let re = Regex::new(r"[\d.]+").unwrap();
                         if let Some(m) = re.find(f_price) {
                             current_price = m.as_str().parse().unwrap_or(0.0);
                         }
                     }
                 }
-                if let Some(max_act) = price_mod.get("maxActivityAmount").or_else(|| price_mod.get("maxAmount")) {
+                if let Some(max_act) = price_mod
+                    .get("maxActivityAmount")
+                    .or_else(|| price_mod.get("maxAmount"))
+                {
                     if let Some(v) = max_act.get("value").and_then(|v| v.as_f64()) {
                         original_price = Some(v);
                     }
@@ -365,13 +439,23 @@ impl PlatformDriver for AliExpressDriver {
             }
 
             if let Some(trade_mod) = self.find_nested_node(data, &["tradeModule", "trade_module"]) {
-                if let Some(fmt_trade) = trade_mod.get("formatTradeCount").or_else(|| trade_mod.get("tradeCount")).and_then(|v| v.as_str()) {
+                if let Some(fmt_trade) = trade_mod
+                    .get("formatTradeCount")
+                    .or_else(|| trade_mod.get("tradeCount"))
+                    .and_then(|v| v.as_str())
+                {
                     sales_text = Some(format!("{} sold", fmt_trade));
                 }
             }
 
-            if let Some(fb_mod) = self.find_nested_node(data, &["feedbackModule", "feedback_module"]) {
-                if let Some(star) = fb_mod.get("averageStar").or_else(|| fb_mod.get("eExpressFeedbackStar")).and_then(|v| v.as_f64()) {
+            if let Some(fb_mod) =
+                self.find_nested_node(data, &["feedbackModule", "feedback_module"])
+            {
+                if let Some(star) = fb_mod
+                    .get("averageStar")
+                    .or_else(|| fb_mod.get("eExpressFeedbackStar"))
+                    .and_then(|v| v.as_f64())
+                {
                     rating_score = Some(star);
                 }
                 if let Some(num) = fb_mod.get("totalValidNum").and_then(|v| v.as_u64()) {
@@ -383,7 +467,11 @@ impl PlatformDriver for AliExpressDriver {
                 if let Some(list) = img_mod.get("imagePathList").and_then(|v| v.as_array()) {
                     for i in list {
                         if let Some(src) = i.as_str() {
-                            let full = if src.starts_with("//") { format!("https:{}", src) } else { src.to_string() };
+                            let full = if src.starts_with("//") {
+                                format!("https:{}", src)
+                            } else {
+                                src.to_string()
+                            };
                             if !main_images.contains(&full) {
                                 main_images.push(full);
                             }
@@ -407,15 +495,34 @@ impl PlatformDriver for AliExpressDriver {
             // 深度解析 skuModule 结构化变体数据 (若有 Cookie/SSR 数据)
             if let Some(sku_mod) = self.find_nested_node(data, &["skuModule", "sku_module"]) {
                 let mut prop_value_map: HashMap<String, (String, String)> = HashMap::new();
-                if let Some(prop_list) = sku_mod.get("productSKUPropertyList").and_then(|v| v.as_array()) {
+                if let Some(prop_list) = sku_mod
+                    .get("productSKUPropertyList")
+                    .and_then(|v| v.as_array())
+                {
                     for p in prop_list {
-                        let prop_name = p.get("skuPropertyName").and_then(|v| v.as_str()).unwrap_or("");
-                        let prop_id = p.get("skuPropertyId").map(|v| v.to_string()).unwrap_or_default();
+                        let prop_name = p
+                            .get("skuPropertyName")
+                            .and_then(|v| v.as_str())
+                            .unwrap_or("");
+                        let prop_id = p
+                            .get("skuPropertyId")
+                            .map(|v| v.to_string())
+                            .unwrap_or_default();
                         if let Some(vals) = p.get("skuPropertyValues").and_then(|v| v.as_array()) {
                             for val in vals {
-                                let val_id = val.get("propertyValueId").map(|v| v.to_string()).unwrap_or_default();
-                                let val_name = val.get("propertyValueDisplayName").or_else(|| val.get("propertyValueName")).and_then(|v| v.as_str()).unwrap_or("");
-                                prop_value_map.insert(format!("{}:{}", prop_id, val_id), (prop_name.to_string(), val_name.to_string()));
+                                let val_id = val
+                                    .get("propertyValueId")
+                                    .map(|v| v.to_string())
+                                    .unwrap_or_default();
+                                let val_name = val
+                                    .get("propertyValueDisplayName")
+                                    .or_else(|| val.get("propertyValueName"))
+                                    .and_then(|v| v.as_str())
+                                    .unwrap_or("");
+                                prop_value_map.insert(
+                                    format!("{}:{}", prop_id, val_id),
+                                    (prop_name.to_string(), val_name.to_string()),
+                                );
                             }
                         }
                     }
@@ -425,9 +532,15 @@ impl PlatformDriver for AliExpressDriver {
                     for item in price_list {
                         let sku_id = item.get("skuId").map(|v| v.to_string());
                         let sku_val = item.get("skuVal").cloned().unwrap_or(Value::Null);
-                        let price = sku_val.get("skuActivityAmount").or_else(|| sku_val.get("skuAmount"))
-                            .and_then(|v| v.get("value")).and_then(|v| v.as_f64());
-                        let orig_price = sku_val.get("skuAmount").and_then(|v| v.get("value")).and_then(|v| v.as_f64());
+                        let price = sku_val
+                            .get("skuActivityAmount")
+                            .or_else(|| sku_val.get("skuAmount"))
+                            .and_then(|v| v.get("value"))
+                            .and_then(|v| v.as_f64());
+                        let orig_price = sku_val
+                            .get("skuAmount")
+                            .and_then(|v| v.get("value"))
+                            .and_then(|v| v.as_f64());
                         let stock = sku_val.get("availQuantity").and_then(|v| v.as_i64());
                         let sku_attr = item.get("skuAttr").and_then(|v| v.as_str()).unwrap_or("");
 
@@ -439,7 +552,11 @@ impl PlatformDriver for AliExpressDriver {
                                 name_parts.push(v_name.clone());
                             }
                         }
-                        let name = if !name_parts.is_empty() { name_parts.join(" ") } else { format!("SKU {}", sku_id.as_deref().unwrap_or("默认")) };
+                        let name = if !name_parts.is_empty() {
+                            name_parts.join(" ")
+                        } else {
+                            format!("SKU {}", sku_id.as_deref().unwrap_or("默认"))
+                        };
                         skus.push(crate::model::ProductSkuItem {
                             sku_id,
                             name,
@@ -456,7 +573,9 @@ impl PlatformDriver for AliExpressDriver {
 
         // 4. DOM 兜底抽取（必须排除包含 logo 的顶级 h1）
         if title.starts_with("AliExpress Product") || title.eq_ignore_ascii_case("aliexpress") {
-            if let Ok(sel) = Selector::parse("[data-pl='product-title'], .product-title-text, h1.product-title") {
+            if let Ok(sel) =
+                Selector::parse("[data-pl='product-title'], .product-title-text, h1.product-title")
+            {
                 if let Some(el) = document.select(&sel).next() {
                     let t = el.text().collect::<String>().trim().to_string();
                     let cleaned = clean_aliexpress_title(&t);
@@ -468,7 +587,9 @@ impl PlatformDriver for AliExpressDriver {
         }
 
         if current_price == 0.0 {
-            if let Ok(sel) = Selector::parse(".product-price-current, .uniform-banner-box-price, span[class*='Price']") {
+            if let Ok(sel) = Selector::parse(
+                ".product-price-current, .uniform-banner-box-price, span[class*='Price']",
+            ) {
                 if let Some(el) = document.select(&sel).next() {
                     let text = el.text().collect::<String>();
                     let re = Regex::new(r"[\d.]+").unwrap();
@@ -487,7 +608,9 @@ impl PlatformDriver for AliExpressDriver {
         }
 
         if sales_text.is_none() {
-            if let Ok(sel) = Selector::parse(".product-reviewer-sold, span[class*='sold'], span[class*='Sold']") {
+            if let Ok(sel) =
+                Selector::parse(".product-reviewer-sold, span[class*='sold'], span[class*='Sold']")
+            {
                 for el in document.select(&sel) {
                     let t = el.text().collect::<String>().trim().to_string();
                     if t.to_lowercase().contains("sold") || t.contains("件") {
@@ -499,7 +622,9 @@ impl PlatformDriver for AliExpressDriver {
         }
 
         if shop_name.is_none() {
-            if let Ok(sel) = Selector::parse("a.shop-name-link, a[class*='store-name'], a[class*='shop-name']") {
+            if let Ok(sel) =
+                Selector::parse("a.shop-name-link, a[class*='store-name'], a[class*='shop-name']")
+            {
                 if let Some(el) = document.select(&sel).next() {
                     let sn = el.text().collect::<String>().trim().to_string();
                     if !sn.is_empty() {
@@ -513,7 +638,9 @@ impl PlatformDriver for AliExpressDriver {
         }
 
         if description_markdown.is_empty() {
-            if let Ok(sel) = Selector::parse("#product-description, .product-description, [data-pl='product-description']") {
+            if let Ok(sel) = Selector::parse(
+                "#product-description, .product-description, [data-pl='product-description']",
+            ) {
                 if let Some(el) = document.select(&sel).next() {
                     description_markdown = html_to_clean_markdown(&el.html());
                 }
@@ -544,7 +671,10 @@ impl PlatformDriver for AliExpressDriver {
             if let Some(caps) = size_re.captures(&title) {
                 if let Some(m) = caps.get(1) {
                     let full_match = m.as_str();
-                    let unit = full_match.chars().filter(|c| c.is_alphabetic()).collect::<String>();
+                    let unit = full_match
+                        .chars()
+                        .filter(|c| c.is_alphabetic())
+                        .collect::<String>();
                     let nums_part = full_match.trim_end_matches(&unit);
                     let sub_sizes: Vec<&str> = nums_part.split('/').collect();
                     for (idx, s) in sub_sizes.iter().enumerate() {
@@ -567,19 +697,31 @@ impl PlatformDriver for AliExpressDriver {
                         skus.push(crate::model::ProductSkuItem {
                             sku_id: Some(format!("{}_{}", item_id, idx + 1)),
                             name: name_label,
-                            price: if current_price > 0.0 { Some(current_price) } else { None },
+                            price: if current_price > 0.0 {
+                                Some(current_price)
+                            } else {
+                                None
+                            },
                             original_price: None,
                             stock: None,
                             image_url: main_images.first().cloned(),
                             properties: props,
                         });
                     }
-                    specifications.insert("可选规格列表".to_string(), sub_sizes.iter().map(|s| format!("{}{}", s, unit)).collect::<Vec<_>>().join(" / "));
+                    specifications.insert(
+                        "可选规格列表".to_string(),
+                        sub_sizes
+                            .iter()
+                            .map(|s| format!("{}{}", s, unit))
+                            .collect::<Vec<_>>()
+                            .join(" / "),
+                    );
                     specifications.insert("变体规格数".to_string(), skus.len().to_string());
                 }
             }
 
-            if title.to_lowercase().contains("pair") && !specifications.contains_key("包装单位") {
+            if title.to_lowercase().contains("pair") && !specifications.contains_key("包装单位")
+            {
                 specifications.insert("包装单位".to_string(), "1Pair (双/对)".to_string());
             }
         } else {
@@ -638,7 +780,9 @@ impl PlatformDriver for AliExpressDriver {
         _page: u32,
         limit: usize,
     ) -> Result<Vec<ProductReview>> {
-        let item_id = self.extract_item_id(url).context("无法提取 AliExpress 商品 ID")?;
+        let item_id = self
+            .extract_item_id(url)
+            .context("无法提取 AliExpress 商品 ID")?;
         info!("正在获取 AliExpress 买家评论: ID = {}", item_id);
 
         let html_text = http.get_text(url, None).await?;
@@ -648,20 +792,44 @@ impl PlatformDriver for AliExpressDriver {
 
         // 尝试从内联数据提取
         if let Some(ref data) = self.extract_inline_data(&html_text, &document) {
-            if let Some(fb_mod) = self.find_nested_node(data, &["feedbackList", "reviews", "reviewList"]) {
+            if let Some(fb_mod) =
+                self.find_nested_node(data, &["feedbackList", "reviews", "reviewList"])
+            {
                 if let Some(arr) = fb_mod.as_array() {
                     for (idx, r) in arr.iter().take(limit).enumerate() {
-                        let author = r.get("buyerName").or_else(|| r.get("author")).and_then(|v| v.as_str()).unwrap_or("AliExpress Buyer").to_string();
-                        let content = r.get("buyerFeedback").or_else(|| r.get("content")).and_then(|v| v.as_str()).unwrap_or("").to_string();
-                        let rating = r.get("buyerEval").or_else(|| r.get("rating")).and_then(|v| v.as_u64()).unwrap_or(5) as u8;
-                        let date = r.get("evalDate").and_then(|v| v.as_str()).unwrap_or("").to_string();
+                        let author = r
+                            .get("buyerName")
+                            .or_else(|| r.get("author"))
+                            .and_then(|v| v.as_str())
+                            .unwrap_or("AliExpress Buyer")
+                            .to_string();
+                        let content = r
+                            .get("buyerFeedback")
+                            .or_else(|| r.get("content"))
+                            .and_then(|v| v.as_str())
+                            .unwrap_or("")
+                            .to_string();
+                        let rating = r
+                            .get("buyerEval")
+                            .or_else(|| r.get("rating"))
+                            .and_then(|v| v.as_u64())
+                            .unwrap_or(5) as u8;
+                        let date = r
+                            .get("evalDate")
+                            .and_then(|v| v.as_str())
+                            .unwrap_or("")
+                            .to_string();
 
                         if !content.is_empty() {
                             reviews.push(ProductReview {
                                 review_id: format!("ae_{}_{}", item_id, idx + 1),
                                 author,
                                 rating,
-                                review_date: if date.is_empty() { chrono::Utc::now().format("%Y-%m-%d").to_string() } else { date },
+                                review_date: if date.is_empty() {
+                                    chrono::Utc::now().format("%Y-%m-%d").to_string()
+                                } else {
+                                    date
+                                },
                                 content,
                                 sku_purchased: None,
                                 images: Vec::new(),

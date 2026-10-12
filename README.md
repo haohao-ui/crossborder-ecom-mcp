@@ -1,5 +1,9 @@
 # Crossborder E-commerce MCP Server (`crossborder-ecom-mcp`)
 
+[![CI](https://github.com/haohao-ui/crossborder-ecom-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/haohao-ui/crossborder-ecom-mcp/actions/workflows/ci.yml)
+[![Release](https://github.com/haohao-ui/crossborder-ecom-mcp/actions/workflows/release.yml/badge.svg)](https://github.com/haohao-ui/crossborder-ecom-mcp/actions/workflows/release.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+
 基于 Rust 开发的高性能跨境出海电商情报与产品信息获取 MCP (Model Context Protocol) 服务端。
 
 专门针对 **Amazon（亚马逊）**、**AliExpress（速卖通）**、**Shopify（品牌独立站）** 与 **TikTok Shop（跨境短视频电商）** 设计，提供包含产品上架时间、销量表现、综合评价、所属店铺、双轨分类体系、买家长评、五点卖点及图文详情在内的深度情报提取能力。

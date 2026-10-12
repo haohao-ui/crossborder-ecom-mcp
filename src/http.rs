@@ -39,12 +39,14 @@ impl HttpClient {
             ACCEPT,
             HeaderValue::from_static("text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8"),
         );
-        headers.insert(
-            ACCEPT_LANGUAGE,
-            HeaderValue::from_static("en-US,en;q=0.9"),
-        );
+        headers.insert(ACCEPT_LANGUAGE, HeaderValue::from_static("en-US,en;q=0.9"));
         headers.insert(CACHE_CONTROL, HeaderValue::from_static("max-age=0"));
-        headers.insert("sec-ch-ua", HeaderValue::from_static("\"Chromium\";v=\"128\", \"Not;A=Brand\";v=\"24\", \"Google Chrome\";v=\"128\""));
+        headers.insert(
+            "sec-ch-ua",
+            HeaderValue::from_static(
+                "\"Chromium\";v=\"128\", \"Not;A=Brand\";v=\"24\", \"Google Chrome\";v=\"128\"",
+            ),
+        );
         headers.insert("sec-ch-ua-mobile", HeaderValue::from_static("?0"));
         headers.insert("sec-ch-ua-platform", HeaderValue::from_static("\"macOS\""));
         headers.insert("sec-fetch-dest", HeaderValue::from_static("document"));
@@ -87,7 +89,8 @@ impl HttpClient {
                         anyhow::bail!("页面不存在 (404 Not Found): {}", url);
                     } else if status.as_u16() == 503 {
                         // 亚马逊常见的人机验证或临时限流
-                        last_err = anyhow::anyhow!("服务暂不可用或触发反爬拦截 (HTTP 503): {}", url);
+                        last_err =
+                            anyhow::anyhow!("服务暂不可用或触发反爬拦截 (HTTP 503): {}", url);
                     } else {
                         last_err = anyhow::anyhow!("HTTP 错误状态码: {}", status);
                     }

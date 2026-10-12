@@ -26,7 +26,10 @@ async fn test_config_and_db_initialization() {
     assert_eq!(config.cache.default_ttl_hours, 12);
     assert_eq!(config.platforms.amazon.default_zip_code, "10001");
 
-    let temp_db = format!("data/test_mcp_{}.db", chrono::Utc::now().timestamp_nanos_opt().unwrap_or(0));
+    let temp_db = format!(
+        "data/test_mcp_{}.db",
+        chrono::Utc::now().timestamp_nanos_opt().unwrap_or(0)
+    );
     let _db = Database::init(&temp_db).expect("DB 初始化失败");
     let http = HttpClient::new(&config.network).expect("HTTP 初始化失败");
 

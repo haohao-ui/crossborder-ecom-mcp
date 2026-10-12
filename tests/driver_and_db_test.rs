@@ -65,7 +65,9 @@ fn test_platform_link_parsing() {
 
     // 测试 Modern.js HTML 离线样本解析
     if let Ok(sample_html) = std::fs::read_to_string("tiktok_sample.html") {
-        let parsed = tiktok.parse_html_product(raw_id, pdp_url, &sample_html).expect("解析样本失败");
+        let parsed = tiktok
+            .parse_html_product(raw_id, pdp_url, &sample_html)
+            .expect("解析样本失败");
         assert!(parsed.title.contains("MSHUKCOE Invisible Sleep"));
         assert_eq!(parsed.brand, Some("MSHUKCOE".to_string()));
         assert_eq!(parsed.shop_name, Some("Listening Digital".to_string()));
@@ -75,18 +77,35 @@ fn test_platform_link_parsing() {
         assert_eq!(parsed.skus[0].name, "【Black】");
         assert_eq!(parsed.skus[0].price, Some(19.24));
         assert_eq!(parsed.skus[0].stock, Some(151));
-        assert_eq!(parsed.standard_category.as_ref().map(|c| c.main_name.as_str()), Some("手机与数码"));
-        assert_eq!(parsed.standard_category.as_ref().and_then(|c| c.sub_name.as_deref()), Some("影音设备"));
+        assert_eq!(
+            parsed
+                .standard_category
+                .as_ref()
+                .map(|c| c.main_name.as_str()),
+            Some("手机与数码")
+        );
+        assert_eq!(
+            parsed
+                .standard_category
+                .as_ref()
+                .and_then(|c| c.sub_name.as_deref()),
+            Some("影音设备")
+        );
         assert_eq!(parsed.main_images.len(), 8);
         assert!(!parsed.description_markdown.is_empty());
-        assert!(parsed.description_markdown.contains("Bluetooth Version: 5.3"));
+        assert!(parsed
+            .description_markdown
+            .contains("Bluetooth Version: 5.3"));
         assert!(parsed.description_markdown.contains("![详情图]"));
     }
 
     let ae = crossborder_ecom_mcp::platforms::aliexpress::AliExpressDriver::new();
     let ae_url1 = "https://www.aliexpress.com/item/1005006283920192.html";
     assert!(ae.can_handle(ae_url1));
-    assert_eq!(ae.extract_item_id(ae_url1), Some("1005006283920192".to_string()));
+    assert_eq!(
+        ae.extract_item_id(ae_url1),
+        Some("1005006283920192".to_string())
+    );
 
     let ae_url2 = "https://aliexpress.us/item/32812345678.html?spm=a2g0o.productlist.main.1.1234";
     assert!(ae.can_handle(ae_url2));
@@ -95,7 +114,10 @@ fn test_platform_link_parsing() {
 
 #[test]
 fn test_database_crud_and_snapshot() {
-    let temp_db_path = format!("data/test_{}.db", chrono::Utc::now().timestamp_nanos_opt().unwrap_or(0));
+    let temp_db_path = format!(
+        "data/test_{}.db",
+        chrono::Utc::now().timestamp_nanos_opt().unwrap_or(0)
+    );
     let db = Database::init(&temp_db_path).expect("初始化测试 DB 失败");
 
     let mut specs = HashMap::new();
@@ -112,7 +134,11 @@ fn test_database_crud_and_snapshot() {
         shop_url: Some("https://www.amazon.com/stores/Apple".to_string()),
         root_category: Some("Electronics".to_string()),
         leaf_category: Some("Laptops".to_string()),
-        category_path: vec!["Electronics".to_string(), "Computers".to_string(), "Laptops".to_string()],
+        category_path: vec![
+            "Electronics".to_string(),
+            "Computers".to_string(),
+            "Laptops".to_string(),
+        ],
         currency: "USD".to_string(),
         current_price: 1999.99,
         original_price: Some(2199.99),
@@ -144,7 +170,10 @@ fn test_database_crud_and_snapshot() {
     assert!(pid > 0);
 
     // 查询商品
-    let fetched = db.get_product("amazon", "B0TEST1234").expect("查询失败").expect("未找到记录");
+    let fetched = db
+        .get_product("amazon", "B0TEST1234")
+        .expect("查询失败")
+        .expect("未找到记录");
     assert_eq!(fetched.title, "Test Laptop 16-inch");
     assert_eq!(fetched.current_price, 1999.99);
     assert_eq!(fetched.root_category, Some("Electronics".to_string()));
@@ -156,7 +185,9 @@ fn test_database_crud_and_snapshot() {
     updated_detail.updated_at += 3600;
     db.save_product(&updated_detail).expect("再次更新商品失败");
 
-    let history = db.get_price_history("amazon", "B0TEST1234").expect("获取价格历史失败");
+    let history = db
+        .get_price_history("amazon", "B0TEST1234")
+        .expect("获取价格历史失败");
     assert_eq!(history.len(), 2);
     assert_eq!(history[0].price, 1999.99);
     assert_eq!(history[1].price, 1899.99);
@@ -174,7 +205,9 @@ fn test_database_crud_and_snapshot() {
     }];
     db.save_reviews(pid, &reviews).expect("保存评论失败");
 
-    let cached_reviews = db.get_reviews("amazon", "B0TEST1234", 10).expect("查询评论失败");
+    let cached_reviews = db
+        .get_reviews("amazon", "B0TEST1234", 10)
+        .expect("查询评论失败");
     assert_eq!(cached_reviews.len(), 1);
     assert_eq!(cached_reviews[0].author, "John Doe");
 
@@ -216,14 +249,17 @@ fn test_taxonomy_matching() {
     assert_eq!(match_nativity.sub_name, Some("节庆及派对用品".to_string()));
 
     // 验证桌面雕像装饰匹配到 居家日用 > 装饰
-    let match_statue = match_category("Nordic Modern Statue Ceramic Desktop Decoration For Home Living Room").expect("应匹配家居装饰");
+    let match_statue =
+        match_category("Nordic Modern Statue Ceramic Desktop Decoration For Home Living Room")
+            .expect("应匹配家居装饰");
     assert_eq!(match_statue.main_code, "10");
     assert_eq!(match_statue.main_name, "居家日用");
     assert_eq!(match_statue.sub_code, Some("852104".to_string()));
     assert_eq!(match_statue.sub_name, Some("装饰".to_string()));
 
     // 验证包含 1PCS 的非电脑商品不会因为子串 "pc" 误判为电脑
-    let match_storage = match_category("1PCS Foldable Fabric Storage Box Organizer").expect("应匹配家居收纳");
+    let match_storage =
+        match_category("1PCS Foldable Fabric Storage Box Organizer").expect("应匹配家居收纳");
     assert_eq!(match_storage.main_code, "10");
     assert_eq!(match_storage.main_name, "居家日用");
     assert_eq!(match_storage.sub_code, Some("851848".to_string()));

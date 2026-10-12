@@ -140,13 +140,16 @@ impl Database {
         let mut rows = stmt.query(params![platform, item_id])?;
         if let Some(row) = rows.next()? {
             let category_path_raw: String = row.get(9)?;
-            let category_path: Vec<String> = serde_json::from_str(&category_path_raw).unwrap_or_default();
+            let category_path: Vec<String> =
+                serde_json::from_str(&category_path_raw).unwrap_or_default();
 
             let main_images_raw: String = row.get(17)?;
-            let main_images: Vec<String> = serde_json::from_str(&main_images_raw).unwrap_or_default();
+            let main_images: Vec<String> =
+                serde_json::from_str(&main_images_raw).unwrap_or_default();
 
             let specs_raw: String = row.get(18)?;
-            let specifications: HashMap<String, String> = serde_json::from_str(&specs_raw).unwrap_or_default();
+            let specifications: HashMap<String, String> =
+                serde_json::from_str(&specs_raw).unwrap_or_default();
 
             let skus_raw: Option<String> = row.get(19)?;
             let skus: Vec<crate::model::ProductSkuItem> = skus_raw
@@ -198,8 +201,14 @@ impl Database {
         let main_images_json = serde_json::to_string(&detail.main_images)?;
         let specs_json = serde_json::to_string(&detail.specifications)?;
         let skus_json = serde_json::to_string(&detail.skus)?;
-        let standard_category_json = detail.standard_category.as_ref().and_then(|c| serde_json::to_string(c).ok());
-        let region_json = detail.region.as_ref().and_then(|r| serde_json::to_string(r).ok());
+        let standard_category_json = detail
+            .standard_category
+            .as_ref()
+            .and_then(|c| serde_json::to_string(c).ok());
+        let region_json = detail
+            .region
+            .as_ref()
+            .and_then(|r| serde_json::to_string(r).ok());
 
         // UPSERT 到 products 表
         conn.execute(
@@ -364,14 +373,20 @@ impl Database {
     }
 
     /// 根据平台和商品 ID 保存买家评论
-    pub fn save_reviews_by_item(&self, platform: &str, item_id: &str, reviews: &[ProductReview]) -> Result<()> {
+    pub fn save_reviews_by_item(
+        &self,
+        platform: &str,
+        item_id: &str,
+        reviews: &[ProductReview],
+    ) -> Result<()> {
         let product_id_opt: Option<i64> = {
             let conn = self.conn.lock().unwrap();
             conn.query_row(
                 "SELECT id FROM products WHERE platform = ?1 AND item_id = ?2",
                 params![platform, item_id],
                 |row| row.get(0),
-            ).ok()
+            )
+            .ok()
         };
 
         if let Some(pid) = product_id_opt {
@@ -381,7 +396,12 @@ impl Database {
     }
 
     /// 获取缓存的买家评论
-    pub fn get_reviews(&self, platform: &str, item_id: &str, limit: usize) -> Result<Vec<ProductReview>> {
+    pub fn get_reviews(
+        &self,
+        platform: &str,
+        item_id: &str,
+        limit: usize,
+    ) -> Result<Vec<ProductReview>> {
         let conn = self.conn.lock().unwrap();
         let mut stmt = conn.prepare(
             r#"

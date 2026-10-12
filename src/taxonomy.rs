@@ -154,81 +154,385 @@ pub fn match_category(text: &str) -> Option<MatchedCategory> {
     let keyword_mappings: &[(&[&str], &str, Option<&str>)] = &[
         // (关键词组, 一级code, 二级code)
         // 居家日用细分：节庆派对用品与家居装饰
-        (&[
-            "christmas", "xmas", "nativity", "halloween", "easter", "thanksgiving", 
-            "party decor", "party decora", "party decoration", "party supplies", 
-            "jesus scene", "festival", "carnival", "balloon", "balloons", "confetti", 
-            "圣诞", "节庆", "派对用品", "节日装饰"
-        ], "10", Some("852488")),
-        (&[
-            "statue", "sculpture", "figurine", "desktop decoration", "home decoration", 
-            "home decor", "office decor", "office decora", "table decor", "wall decor", 
-            "wall art", "ornament", "vase", "candle holder", "artificial flower", 
-            "摆件", "雕像", "装饰品", "家居装饰", "桌面摆件"
-        ], "10", Some("852104")),
-        (&[
-            "storage box", "storage bag", "organizer", "clothes rack", "hanger", 
-            "收纳盒", "收纳袋", "收纳整理", "衣架"
-        ], "10", Some("851848")),
-        (&[
-            "shower curtain", "towel", "bath mat", "toothbrush holder", 
-            "毛巾", "浴巾", "浴帘", "浴室用品"
-        ], "10", Some("851976")),
-
+        (
+            &[
+                "christmas",
+                "xmas",
+                "nativity",
+                "halloween",
+                "easter",
+                "thanksgiving",
+                "party decor",
+                "party decora",
+                "party decoration",
+                "party supplies",
+                "jesus scene",
+                "festival",
+                "carnival",
+                "balloon",
+                "balloons",
+                "confetti",
+                "圣诞",
+                "节庆",
+                "派对用品",
+                "节日装饰",
+            ],
+            "10",
+            Some("852488"),
+        ),
+        (
+            &[
+                "statue",
+                "sculpture",
+                "figurine",
+                "desktop decoration",
+                "home decoration",
+                "home decor",
+                "office decor",
+                "office decora",
+                "table decor",
+                "wall decor",
+                "wall art",
+                "ornament",
+                "vase",
+                "candle holder",
+                "artificial flower",
+                "摆件",
+                "雕像",
+                "装饰品",
+                "家居装饰",
+                "桌面摆件",
+            ],
+            "10",
+            Some("852104"),
+        ),
+        (
+            &[
+                "storage box",
+                "storage bag",
+                "organizer",
+                "clothes rack",
+                "hanger",
+                "收纳盒",
+                "收纳袋",
+                "收纳整理",
+                "衣架",
+            ],
+            "10",
+            Some("851848"),
+        ),
+        (
+            &[
+                "shower curtain",
+                "towel",
+                "bath mat",
+                "toothbrush holder",
+                "毛巾",
+                "浴巾",
+                "浴帘",
+                "浴室用品",
+            ],
+            "10",
+            Some("851976"),
+        ),
         // 鞋靴配件优先于基础鞋靴，避免误判
-        (&[
-            "shoelace", "shoe lace", "shoelaces", "laces", "insole", "shoe horn", 
-            "shoe tree", "shoe accessories", "shoes accessories", 
-            "鞋带", "鞋垫", "鞋配件", "鞋靴配件"
-        ], "6", Some("900744")),
-        (&["men shoe", "men's shoe", "men sneaker", "men boot", "男鞋", "男士鞋"], "6", Some("900616")),
-        (&["women shoe", "women's shoe", "women sneaker", "high heel", "pump", "女鞋", "女士鞋", "高跟鞋"], "6", Some("900488")),
-        (&["sneaker", "boot", "sandal", "slipper", "shoe", "footwear", "shoes", "boots", "sneakers", "鞋", "运动鞋", "凉鞋", "拖鞋"], "6", None),
-
+        (
+            &[
+                "shoelace",
+                "shoe lace",
+                "shoelaces",
+                "laces",
+                "insole",
+                "shoe horn",
+                "shoe tree",
+                "shoe accessories",
+                "shoes accessories",
+                "鞋带",
+                "鞋垫",
+                "鞋配件",
+                "鞋靴配件",
+            ],
+            "6",
+            Some("900744"),
+        ),
+        (
+            &[
+                "men shoe",
+                "men's shoe",
+                "men sneaker",
+                "men boot",
+                "男鞋",
+                "男士鞋",
+            ],
+            "6",
+            Some("900616"),
+        ),
+        (
+            &[
+                "women shoe",
+                "women's shoe",
+                "women sneaker",
+                "high heel",
+                "pump",
+                "女鞋",
+                "女士鞋",
+                "高跟鞋",
+            ],
+            "6",
+            Some("900488"),
+        ),
+        (
+            &[
+                "sneaker",
+                "boot",
+                "sandal",
+                "slipper",
+                "shoe",
+                "footwear",
+                "shoes",
+                "boots",
+                "sneakers",
+                "鞋",
+                "运动鞋",
+                "凉鞋",
+                "拖鞋",
+            ],
+            "6",
+            None,
+        ),
         // 美妆个护
-        (&["beauty", "cosmetic", "skincare", "lipstick", "perfume", "makeup", "facial", "lotion", "shampoo", "美妆", "护肤", "口红", "香水"], "14", Some("848776")),
-
+        (
+            &[
+                "beauty", "cosmetic", "skincare", "lipstick", "perfume", "makeup", "facial",
+                "lotion", "shampoo", "美妆", "护肤", "口红", "香水",
+            ],
+            "14",
+            Some("848776"),
+        ),
         // 服装：避免使用孤立的 "women" 或 "men" 以免误判配件/鞋靴
-        (&["women clothing", "women's clothing", "women clothes", "dress", "skirt", "bra", "blouse", "lingerie", "underwear", "leggings", "女装", "裙", "连衣裙", "文胸"], "2", Some("842504")),
-        (&["men clothing", "men's clothing", "shirt", "suit", "jacket", "hoodie", "t-shirt", "pants", "trousers", "jeans", "男装", "男士"], "3", Some("839944")),
-
+        (
+            &[
+                "women clothing",
+                "women's clothing",
+                "women clothes",
+                "dress",
+                "skirt",
+                "bra",
+                "blouse",
+                "lingerie",
+                "underwear",
+                "leggings",
+                "女装",
+                "裙",
+                "连衣裙",
+                "文胸",
+            ],
+            "2",
+            Some("842504"),
+        ),
+        (
+            &[
+                "men clothing",
+                "men's clothing",
+                "shirt",
+                "suit",
+                "jacket",
+                "hoodie",
+                "t-shirt",
+                "pants",
+                "trousers",
+                "jeans",
+                "男装",
+                "男士",
+            ],
+            "3",
+            Some("839944"),
+        ),
         // 电脑办公：避免单字母简写 "pc" 误匹配 "1pcs" 或其它词汇
-        (&[
-            "laptop", "computer", "notebook", "desktop computer", "desktop pc", 
-            "gaming pc", "pc computer", "keyboard", "mouse", "monitor", 
-            "电脑", "笔记本", "台式机", "显示器"
-        ], "15", Some("824840")),
-
+        (
+            &[
+                "laptop",
+                "computer",
+                "notebook",
+                "desktop computer",
+                "desktop pc",
+                "gaming pc",
+                "pc computer",
+                "keyboard",
+                "mouse",
+                "monitor",
+                "电脑",
+                "笔记本",
+                "台式机",
+                "显示器",
+            ],
+            "15",
+            Some("824840"),
+        ),
         // 手机数码与影音设备
-        (&[
-            "earbuds", "headphone", "headset", "earphones", "bluetooth earbuds", 
-            "speaker", "soundbar", "audio", "hifi", "耳机", "蓝牙耳机", "音箱", "音响", "影音"
-        ], "16", Some("909320")),
-        (&[
-            "phone", "smartphone", "iphone", "phone case", "charger", "cable", 
-            "power bank", "screen protector", "数码", "手机", "手机壳", "充电器", "数据线"
-        ], "16", Some("909064")),
-
+        (
+            &[
+                "earbuds",
+                "headphone",
+                "headset",
+                "earphones",
+                "bluetooth earbuds",
+                "speaker",
+                "soundbar",
+                "audio",
+                "hifi",
+                "耳机",
+                "蓝牙耳机",
+                "音箱",
+                "音响",
+                "影音",
+            ],
+            "16",
+            Some("909320"),
+        ),
+        (
+            &[
+                "phone",
+                "smartphone",
+                "iphone",
+                "phone case",
+                "charger",
+                "cable",
+                "power bank",
+                "screen protector",
+                "数码",
+                "手机",
+                "手机壳",
+                "充电器",
+                "数据线",
+            ],
+            "16",
+            Some("909064"),
+        ),
         // 运动户外与厨房
-        (&["sport", "fitness", "yoga", "outdoor", "camping", "hiking", "cycling", "运动", "户外", "健身", "瑜伽"], "9", Some("835336")),
-        (&["kitchen", "coffee", "knife", "cookware", "frying pan", "tableware", "cutlery", "厨房", "餐具", "茶具", "刀具"], "11", Some("858504")),
-
+        (
+            &[
+                "sport", "fitness", "yoga", "outdoor", "camping", "hiking", "cycling", "运动",
+                "户外", "健身", "瑜伽",
+            ],
+            "9",
+            Some("835336"),
+        ),
+        (
+            &[
+                "kitchen",
+                "coffee",
+                "knife",
+                "cookware",
+                "frying pan",
+                "tableware",
+                "cutlery",
+                "厨房",
+                "餐具",
+                "茶具",
+                "刀具",
+            ],
+            "11",
+            Some("858504"),
+        ),
         // 箱包与首饰
-        (&["bag", "backpack", "wallet", "handbag", "tote bag", "luggage", "suitcase", "箱包", "背包", "女包", "钱包", "旅行箱"], "7", Some("902408")),
-        (&["jewelry", "necklace", "ring", "earring", "bracelet", "diamond", "gold", "silver", "珠宝", "首饰", "项链", "戒指", "耳环"], "28", Some("955016")),
-        (&["watch", "smartwatch", "glasses", "sunglasses", "wig", "hair extension", "手表", "眼镜", "太阳镜", "假发"], "8", Some("905352")),
-
+        (
+            &[
+                "bag",
+                "backpack",
+                "wallet",
+                "handbag",
+                "tote bag",
+                "luggage",
+                "suitcase",
+                "箱包",
+                "背包",
+                "女包",
+                "钱包",
+                "旅行箱",
+            ],
+            "7",
+            Some("902408"),
+        ),
+        (
+            &[
+                "jewelry", "necklace", "ring", "earring", "bracelet", "diamond", "gold", "silver",
+                "珠宝", "首饰", "项链", "戒指", "耳环",
+            ],
+            "28",
+            Some("955016"),
+        ),
+        (
+            &[
+                "watch",
+                "smartwatch",
+                "glasses",
+                "sunglasses",
+                "wig",
+                "hair extension",
+                "手表",
+                "眼镜",
+                "太阳镜",
+                "假发",
+            ],
+            "8",
+            Some("905352"),
+        ),
         // 玩具与宠物与家电
-        (&["toy", "puzzle", "doll", "action figure", "game", "plush", "玩具", "手办", "拼图", "公仔"], "19", Some("859656")),
-        (&["pet", "dog", "cat", "aquarium", "pet leash", "pet collar", "宠物", "猫", "狗"], "17", Some("812168")),
-        (&["appliance", "refrigerator", "vacuum", "air purifier", "blender", "家电", "吸尘器", "冰箱"], "13", Some("844808")),
+        (
+            &[
+                "toy",
+                "puzzle",
+                "doll",
+                "action figure",
+                "game",
+                "plush",
+                "玩具",
+                "手办",
+                "拼图",
+                "公仔",
+            ],
+            "19",
+            Some("859656"),
+        ),
+        (
+            &[
+                "pet",
+                "dog",
+                "cat",
+                "aquarium",
+                "pet leash",
+                "pet collar",
+                "宠物",
+                "猫",
+                "狗",
+            ],
+            "17",
+            Some("812168"),
+        ),
+        (
+            &[
+                "appliance",
+                "refrigerator",
+                "vacuum",
+                "air purifier",
+                "blender",
+                "家电",
+                "吸尘器",
+                "冰箱",
+            ],
+            "13",
+            Some("844808"),
+        ),
     ];
 
     for (kws, main_code, sub_code) in keyword_mappings {
         for kw in *kws {
             if contains_word_or_phrase(&lower_text, kw) {
                 if let Some(cat) = TAXONOMY.category.iter().find(|c| c.c_code == *main_code) {
-                    let sub_name = sub_code.and_then(|code| cat.sub.get(code)).map(|s| s.c_name.clone());
+                    let sub_name = sub_code
+                        .and_then(|code| cat.sub.get(code))
+                        .map(|s| s.c_name.clone());
                     return Some(MatchedCategory {
                         main_code: cat.c_code.clone(),
                         main_name: cat.c_name.clone(),
@@ -285,12 +589,20 @@ pub fn match_country_by_url(url: &str) -> Option<CountryItem> {
 
     for (domain_suffix, region_code) in domain_mappings {
         if lower_url.contains(domain_suffix) {
-            if let Some(c) = TAXONOMY.country.iter().find(|item| item.region_code == *region_code) {
+            if let Some(c) = TAXONOMY
+                .country
+                .iter()
+                .find(|item| item.region_code == *region_code)
+            {
                 return Some(c.clone());
             }
         }
     }
 
     // 降级返回 US
-    TAXONOMY.country.iter().find(|item| item.region_code == "US").cloned()
+    TAXONOMY
+        .country
+        .iter()
+        .find(|item| item.region_code == "US")
+        .cloned()
 }

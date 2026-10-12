@@ -13,6 +13,12 @@ use crate::platforms::PlatformDriver;
 
 pub struct ShopifyDriver;
 
+impl Default for ShopifyDriver {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl ShopifyDriver {
     pub fn new() -> Self {
         Self
@@ -56,11 +62,24 @@ impl PlatformDriver for ShopifyDriver {
         let data: Value = serde_json::from_str(&json_text)
             .context("Shopify JSON 数据解析失败，可能该独立站关闭了公开接口或使用了非标准架构")?;
 
-        let product = data.get("product").context("JSON 响应中缺少 'product' 字段")?;
+        let product = data
+            .get("product")
+            .context("JSON 响应中缺少 'product' 字段")?;
 
-        let title = product.get("title").and_then(|v| v.as_str()).unwrap_or("未知商品").to_string();
-        let vendor = product.get("vendor").and_then(|v| v.as_str()).map(|s| s.to_string());
-        let product_type = product.get("product_type").and_then(|v| v.as_str()).unwrap_or("").to_string();
+        let title = product
+            .get("title")
+            .and_then(|v| v.as_str())
+            .unwrap_or("未知商品")
+            .to_string();
+        let vendor = product
+            .get("vendor")
+            .and_then(|v| v.as_str())
+            .map(|s| s.to_string());
+        let product_type = product
+            .get("product_type")
+            .and_then(|v| v.as_str())
+            .unwrap_or("")
+            .to_string();
 
         // 上架发布时间 (优先 published_at, 降级 created_at)
         let launch_date = product
@@ -76,7 +95,10 @@ impl PlatformDriver for ShopifyDriver {
             });
 
         // 详情内容 (HTML 转 Markdown)
-        let body_html = product.get("body_html").and_then(|v| v.as_str()).unwrap_or("");
+        let body_html = product
+            .get("body_html")
+            .and_then(|v| v.as_str())
+            .unwrap_or("");
         let description_markdown = html_to_clean_markdown(body_html);
 
         // 分类与标签
@@ -84,9 +106,14 @@ impl PlatformDriver for ShopifyDriver {
             .get("tags")
             .map(|t| {
                 if let Some(arr) = t.as_array() {
-                    arr.iter().filter_map(|v| v.as_str().map(|s| s.to_string())).collect()
+                    arr.iter()
+                        .filter_map(|v| v.as_str().map(|s| s.to_string()))
+                        .collect()
                 } else if let Some(s) = t.as_str() {
-                    s.split(',').map(|item| item.trim().to_string()).filter(|item| !item.is_empty()).collect()
+                    s.split(',')
+                        .map(|item| item.trim().to_string())
+                        .filter(|item| !item.is_empty())
+                        .collect()
                 } else {
                     Vec::new()
                 }
@@ -125,9 +152,19 @@ impl PlatformDriver for ShopifyDriver {
         if let Some(variants) = product.get("variants").and_then(|v| v.as_array()) {
             specifications.insert("规格总数".to_string(), variants.len().to_string());
             for v in variants {
-                let v_title = v.get("title").and_then(|x| x.as_str()).unwrap_or("默认").to_string();
-                let v_price = v.get("price").and_then(|x| x.as_str()).and_then(|s| s.parse::<f64>().ok());
-                let v_orig = v.get("compare_at_price").and_then(|x| x.as_str()).and_then(|s| s.parse::<f64>().ok());
+                let v_title = v
+                    .get("title")
+                    .and_then(|x| x.as_str())
+                    .unwrap_or("默认")
+                    .to_string();
+                let v_price = v
+                    .get("price")
+                    .and_then(|x| x.as_str())
+                    .and_then(|s| s.parse::<f64>().ok());
+                let v_orig = v
+                    .get("compare_at_price")
+                    .and_then(|x| x.as_str())
+                    .and_then(|s| s.parse::<f64>().ok());
                 let v_sku = v.get("sku").and_then(|x| x.as_str()).map(|s| s.to_string());
                 let v_stock = v.get("inventory_quantity").and_then(|x| x.as_i64());
 

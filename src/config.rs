@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct AppConfig {
     #[serde(default)]
     pub server: ServerConfig,
@@ -13,18 +13,6 @@ pub struct AppConfig {
     pub network: NetworkConfig,
     #[serde(default)]
     pub platforms: PlatformsConfig,
-}
-
-impl Default for AppConfig {
-    fn default() -> Self {
-        Self {
-            server: ServerConfig::default(),
-            storage: StorageConfig::default(),
-            cache: CacheConfig::default(),
-            network: NetworkConfig::default(),
-            platforms: PlatformsConfig::default(),
-        }
-    }
 }
 
 /// 基础服务配置
