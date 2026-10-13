@@ -38,7 +38,48 @@
 
 ## 一键安装与快速启动
 
-### 方式一：Shell 一键安装（推荐，自动匹配操作系统与架构）
+### 方式一：复制提示词给 AI Agent 全自动安装（推荐）
+
+如果您正在使用 **Claude Code**、**Cursor**、**Windsurf**、**Antigravity**、**Cline** 等 AI 编程智能体，**直接复制下方整段提示词发送给您的 Agent**，即可全自动完成依赖安装、二进制部署、MCP 注册与 Skill 加载：
+
+<details open>
+<summary><b>点击展开 / 复制 Agent 全自动安装提示词</b></summary>
+
+```markdown
+请帮我自动安装和配置跨境出海电商情报 MCP 工具【crossborder-ecom-mcp】，并加载配套的 Skill。请按照以下步骤自动化执行：
+
+1. 安装二进制可执行文件：
+   - 检查本地是否已安装 `crossborder-ecom-mcp`。若未安装，在终端执行官方一键安装命令：
+     curl -fsSL https://raw.githubusercontent.com/haohao-ui/crossborder-ecom-mcp/main/install.sh | bash
+   - 若一键脚本下载失败但本地有 Rust 环境，通过 Cargo 编译：
+     cargo install --git https://github.com/haohao-ui/crossborder-ecom-mcp.git
+   - 执行 `crossborder-ecom-mcp --help` 验证是否成功安装。
+
+2. 自动配置 MCP 服务端：
+   - 检测当前运行的宿主环境（Claude Desktop/Code、Cursor、Windsurf、Cline、Antigravity 等）。
+   - 将二进制文件的绝对路径配置到对应的 MCP 配置文件（例如 `claude_desktop_config.json` 或 `~/.cursor/mcp.json` 等）：
+     {
+       "mcpServers": {
+         "crossborder-ecom": {
+           "command": "<BINARY_PATH>",
+           "args": []
+         }
+       }
+     }
+
+3. 加载跨境电商 Skill 技能包：
+   - 下载官方技能文件：https://raw.githubusercontent.com/haohao-ui/crossborder-ecom-mcp/main/skills/crossborder-ecom/SKILL.md
+   - 保存到宿主 Agent 对应的技能或规则目录（如 Antigravity 的 `~/.gemini/config/skills/crossborder-ecom/SKILL.md`，或 Cursor 的 rules 规则）。
+
+4. 验证与汇报：
+   - 执行 `crossborder-ecom-mcp category "美妆"` 验证功能正常，并向我输出安装路径与可用 MCP 工具清单。
+```
+
+</details>
+
+---
+
+### 方式二：Shell 一键安装（自动匹配操作系统与架构）
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/haohao-ui/crossborder-ecom-mcp/main/install.sh | bash
@@ -46,13 +87,13 @@ curl -fsSL https://raw.githubusercontent.com/haohao-ui/crossborder-ecom-mcp/main
 
 > **说明**：该脚本会自动识别您的系统（macOS / Linux / Windows）与 CPU 架构（x86_64 / arm64），自动下载最新预编译二进制并安装至 `~/.local/bin`。若未检测到 Release 包且本地有 Rust 环境，将自动回退到源码编译。
 
-### 方式二：通过 Rust Cargo 一键安装
+### 方式三：通过 Rust Cargo 一键安装
 
 ```bash
 cargo install --git https://github.com/haohao-ui/crossborder-ecom-mcp.git
 ```
 
-### 方式三：直接下载 GitHub Releases 预编译包
+### 方式四：直接下载 GitHub Releases 预编译包
 
 访问 [GitHub Releases 页面](https://github.com/haohao-ui/crossborder-ecom-mcp/releases) 下载对应平台的二进制压缩包（`.tar.gz` 或 `.zip`），解压后将可执行文件移动至您的系统 PATH 路径即可。
 
@@ -93,6 +134,23 @@ crossborder-ecom-mcp --proxy "http://127.0.0.1:7890" --db "data/custom.db" serve
 | **`get_price_history`** | 查询该商品在本地数据库中记录的历史价格与指标变动趋势 | `url` (必填) |
 | **`list_categories`** | 查询系统内置的 30 个一级分类大类、二级子分类与热门推荐品类（支持关键词搜索） | `keyword` (可选字符串，如 "美妆"、"女装"、"电脑") |
 | **`list_supported_countries`** | 查询支持的 20 个跨境出海国家/地区代码与业务指标分档规则（价格带、销量、佣金率等） | 无入参 |
+
+---
+
+## 配套 AI 技能库 (`Skill: crossborder-ecom`)
+
+本项目提供了符合主流 AI 编程助手标准的专家技能规范定义文件：[`skills/crossborder-ecom/SKILL.md`](skills/crossborder-ecom/SKILL.md)。
+
+### 技能核心能力
+- **出海选品研判**：自动梳理商品在美区本土真实到手价、上架时间、在售时长与真实销量区间。
+- **买家心智挖掘 (VOC)**：提炼高频好评、致命质量缺陷、负评退货风险与未满足诉求。
+- **调价趋势与竞品监控**：对比本地历史快照，输出价格异动与促销趋势分析。
+- **标准化输出模版**：规范 Agent 输出美观、专业的 Markdown 跨境选品分析研报。
+
+### 如何加载技能
+- **Antigravity / AGY**：直接放置在 `~/.gemini/config/skills/crossborder-ecom/SKILL.md`。
+- **Claude Code**：放置在 `~/.claude/skills/crossborder-ecom/SKILL.md`。
+- **Cursor / Windsurf**：可作为 Rules 规则直接导入到 `.cursorrules` / `.windsurfrules`。
 
 ---
 
