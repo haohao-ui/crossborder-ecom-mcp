@@ -8,10 +8,15 @@
 请帮我自动安装和配置跨境出海电商情报 MCP 工具【crossborder-ecom-mcp】，并加载配套的 Skill。请按照以下步骤自动化执行：
 
 ### 步骤 1：安装二进制可执行文件
-1. 检查本地是否已安装 `crossborder-ecom-mcp`。若未安装，请在终端执行官方一键安装脚本：
-   ```bash
-   curl -fsSL https://raw.githubusercontent.com/haohao-ui/crossborder-ecom-mcp/main/install.sh | bash
-   ```
+1. 检查本地是否已安装 `crossborder-ecom-mcp`。若未安装：
+   - **macOS / Linux** 终端执行：
+     ```bash
+     curl -fsSL https://raw.githubusercontent.com/haohao-ui/crossborder-ecom-mcp/main/install.sh | bash
+     ```
+   - **Windows** PowerShell 执行：
+     ```powershell
+     irm https://raw.githubusercontent.com/haohao-ui/crossborder-ecom-mcp/main/install.ps1 | iex
+     ```
 2. 若一键脚本下载失败但本地安装了 Rust 环境，可通过 Cargo 源码编译安装：
    ```bash
    cargo install --git https://github.com/haohao-ui/crossborder-ecom-mcp.git

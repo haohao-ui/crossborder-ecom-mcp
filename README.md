@@ -77,17 +77,23 @@
 
 </details>
 
----
-
-### 方式二：Shell 一键安装（自动匹配操作系统与架构）
+### 方式二：Shell 一键安装（macOS / Linux）
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/haohao-ui/crossborder-ecom-mcp/main/install.sh | bash
 ```
 
-> **说明**：该脚本会自动识别您的系统（macOS / Linux / Windows）与 CPU 架构（x86_64 / arm64），自动下载最新预编译二进制并安装至 `~/.local/bin`。若未检测到 Release 包且本地有 Rust 环境，将自动回退到源码编译。
+> **说明**：该脚本会自动识别系统架构，安全追加 PATH 环境变量至当前 Shell 配置文件，若已配置则跳过，杜绝破坏现有环境。
 
-### 方式三：通过 Rust Cargo 一键安装
+### 方式三：Windows PowerShell 一键安装
+
+在 PowerShell 中执行以下命令（自动配置用户级 PATH 环境变量）：
+
+```powershell
+irm https://raw.githubusercontent.com/haohao-ui/crossborder-ecom-mcp/main/install.ps1 | iex
+```
+
+### 方式四：通过 Rust Cargo 一键安装
 
 ```bash
 cargo install --git https://github.com/haohao-ui/crossborder-ecom-mcp.git
